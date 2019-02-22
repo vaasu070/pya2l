@@ -1,5 +1,5 @@
 from json import dumps
-from pya2l.parser import A2lParser as Parser
+from pya2l import Parser
 
 a2l_string = """
     /begin PROJECT project_name "example project"
@@ -23,6 +23,7 @@ a2l_string = """
                 first_characteristic_conversion
                 -4.5
                 12.0
+                FORMAT "%4.2"
             /end CHARACTERISTIC
         /end MODULE
     /end PROJECT
@@ -69,7 +70,7 @@ assert dumps(ast, sort_keys=True, indent=1) == """{
       "display_identifier": null, 
       "ecu_address_extension": null, 
       "extended_limits": null, 
-      "format": null, 
+      "format": "%4.2", 
       "function_list": null, 
       "guard_rails": null, 
       "if_data": {}, 
@@ -77,7 +78,7 @@ assert dumps(ast, sort_keys=True, indent=1) == """{
       "lower_limit": -4.5, 
       "map_list": null, 
       "matrix_dim": null, 
-      "max_diff": 0, 
+      "max_diff": 0.0, 
       "max_refresh": null, 
       "name": "example_of_characteristic", 
       "node": "CHARACTERISTIC", 
@@ -168,10 +169,11 @@ assert p.dump(indent=1) == """/begin PROJECT
    VALUE
    0
    DAMOS_SST
-   0
+   0.0
    first_characteristic_conversion
    -4.5
    12.0
+   FORMAT %4.2
   /end CHARACTERISTIC
  /end MODULE
 /end PROJECT"""

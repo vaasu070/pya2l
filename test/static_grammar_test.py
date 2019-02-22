@@ -1,14 +1,13 @@
 """
-@project: parser
-@file: a2l_parser_test.py
+@project: pya2l
+@file: static_grammar_test.py
 @author: Guillaume Sottas
 @date: 06.04.2018
 """
 
 import pytest
 
-from pya2l.parser.exception import A2lFormatException
-from pya2l.parser.grammar.parser import A2lParser as Parser
+from pya2l import *
 
 idents = (
     pytest.param('name', 'name', id='valid ident'),
@@ -146,17 +145,6 @@ enum_calibration_access = (
 
 calibration_method_string_minimal = '/begin CALIBRATION_METHOD "" 0 {} /end CALIBRATION_METHOD'
 
-
-@pytest.fixture()
-def calibration_method_string(request):
-    s = '''/begin CALIBRATION_METHOD
-        {string}
-        {long}
-        {calibration_handle}
-        /end CALIBRATION_METHOD'''.format(string='""', long='0', calibration_handle='')
-    return '\n'.join(s for _ in range(request.param))
-
-
 characteristic_string_minimal = '/begin CHARACTERISTIC _ "" VALUE 0 _ 0.0 _ 0.0 0.0 {} /end CHARACTERISTIC'
 calibration_handle_string_minimal = '/begin CALIBRATION_HANDLE {} /end CALIBRATION_HANDLE'
 
@@ -168,39 +156,11 @@ compu_vtab_string_minimal = '/begin COMPU_VTAB _ "" TAB_VERB 0 {} /end COMPU_VTA
 compu_vtab_range_string_minimal = '/begin COMPU_VTAB_RANGE _ "" 0 {} /end COMPU_VTAB_RANGE'
 curve_axis_ref_strings = [
     pytest.param('CURVE_AXIS_REF _', '_', id='valid CURVE_AXIS_REF'),
-    # pytest.param('CURVE_AXIS_REF ',
-    #              None,
-    #              id='invalid CURVE_AXIS_REF',
-    #              marks=pytest.mark.xfail(raises=A2lFormatException, strict=True))
 ]
-
-
-@pytest.fixture()
-def dependent_characteristic_string(request):
-    s = '''/begin DEPENDENT_CHARACTERISTIC
-    {string}
-    {ident}
-    /end DEPENDENT_CHARACTERISTIC'''.format(string='""', ident='_')
-    return '\n'.join(s for _ in range(request.param))
-
 
 enum_mode_deposit = (
     pytest.param('ABSOLUTE', 'ABSOLUTE', id='valid DEPOSIT'),
     pytest.param('DIFFERENCE', 'DIFFERENCE', id='valid DEPOSIT'))
-
-
-@pytest.fixture()
-def extended_limits_string(request):
-    s = '''EXTENDED_LIMITS {float} {float}'''.format(float='0.0')
-    return '\n'.join(s for _ in range(request.param))
-
-
-formula_inv_strings = [
-    pytest.param('FORMULA_INV ""', '', id='valid FORMULA_INV'),
-]
-
-frame_strings = ['/begin FRAME {ident} {string} {int} {long} {frame_measurement} {if_data} /end FRAME']
-frame_measurement_strings = ['/begin FRAME_MEASUREMENT {ident} /end FRAME_MEASUREMENT']
 
 function_string_minimal = '/begin FUNCTION _ "" {} /end FUNCTION'
 
@@ -218,46 +178,9 @@ def header_string(request):
     /end HEADER'''.format(string='""', version=empty_string, project_no=empty_string)
     return '\n'.join(s for _ in range(request.param))
 
-
-@pytest.fixture()
-def map_list_string(request):
-    s = '''/begin MAP_LIST
-    {ident}
-    /end MAP_LIST'''.format(ident='_')
-    return '\n'.join(s for _ in range(request.param))
-
-
-@pytest.fixture()
-def matrix_dim_string(request):
-    s = '''MATRIX_DIM {int} {int} {int}'''.format(int='0')
-    return '\n'.join(s for _ in range(request.param))
-
-
-max_refresh_strings = ['MAX_REFRESH {int} {long}']
-
-
-@pytest.fixture()
-def max_refresh_string(request):
-    s = '''MAX_REFRESH {int} {long}'''.format(int='0', long='0')
-    return '\n'.join(s for _ in range(request.param))
-
-
 measurement_string_minimal = '/begin MEASUREMENT _ "" UBYTE _ 0 0.0 0.0 0.0 {} /end MEASUREMENT'
 
 memory_layout_strings = ['/begin MEMORY_LAYOUT {enum_prg_type} {long} {long} {offset} {if_data} /end MEMORY_LAYOUT']
-
-
-@pytest.fixture()
-def memory_layout_string(request):
-    s = '''/begin MEMORY_LAYOUT
-    {enum_prg_type}
-    {long}
-    {long}
-    {offset}
-    {if_data}
-    /end MEMORY_LAYOUT'''.format(enum_prg_type='PRG_CODE', long='0', offset='0 0 0 0 0', if_data='')
-    return '\n'.join(s for _ in range(request.param))
-
 
 module_string_minimal = '/begin MODULE _ "" {} /end MODULE'
 
@@ -374,12 +297,6 @@ reserved_strings = [
 si_exponents_strings = ['/begin SI_EXPONENTS {int} {int} {int} {int} {int} {int} {int} /end SI_EXPONENTS']
 
 
-@pytest.fixture()
-def system_constant_string(request):
-    s = '''SYSTEM_CONSTANT {string} {string}'''.format(string='""')
-    return '\n'.join(s for _ in range(request.param))
-
-
 unit_string_minimal = '/begin UNIT _ "" "" EXTENDED_SI {} /end UNIT'
 unit_conversion_strings = ['/begin UNIT_CONVERSION {float} {float} /end UNIT_CONVERSION']
 
@@ -392,15 +309,6 @@ var_address_string_minimal = '/begin VAR_ADDRESS {} /end VAR_ADDRESS'
 var_characteristic_string_minimal = '/begin VAR_CHARACTERISTIC _ {} /end VAR_CHARACTERISTIC'
 
 var_criterion_string_minimal = '/begin VAR_CRITERION _ "" {} /end VAR_CRITERION'
-
-
-@pytest.fixture()
-def virtual_characteristic_string(request):
-    s = '''/begin VIRTUAL_CHARACTERISTIC
-    {string}
-    {ident}
-    /end VIRTUAL_CHARACTERISTIC'''.format(string='""', ident='_')
-    return '\n'.join(s for _ in range(request.param))
 
 
 @pytest.fixture()
@@ -534,8 +442,14 @@ def get_node_from_ast(ast, path):
     return result
 
 
-def test_a2l():
-    pytest.xfail('implement me...')
+@pytest.mark.parametrize('e', [''])
+def test_a2l(e):
+    p = Parser(e)
+    assert p.ast.a2ml_version is None
+    assert p.ast.asap2_version is None
+    assert p.ast.project is None
+    assert p.dict() == {'node': 'a2l', 'project': None, 'a2ml_version': None, 'asap2_version': None}
+    assert p.dump() == e
 
 
 @pytest.mark.parametrize('e', ['A2ML_VERSION {int} {int}'])
@@ -673,7 +587,7 @@ def test_annotation_origin(module, e, s, v):
 def test_annotation_text(module, e, count, s, v):
     p = Parser(module[0].format(e.format(s=s)))
     annotation_text = get_node_from_ast(p.ast, module[1])
-    assert type(annotation_text.text) is list
+    assert type(annotation_text.text) is List
     assert len(annotation_text.text) == count
     for text in annotation_text.text:
         assert text == v
@@ -763,7 +677,7 @@ def test_axis_descr(module,
     assert axis_descr.fix_axis_par_dist is None
     assert axis_descr.fix_axis_par_list is None
     assert axis_descr.deposit is None
-    assert type(axis_descr.annotation) is list
+    assert type(axis_descr.annotation) is List
     assert axis_descr.extended_limits is None
     assert axis_descr.curve_axis_ref is None
 
@@ -830,7 +744,8 @@ def test_axis_pts(s,
     assert axis_pts.address == long_value
     assert axis_pts.input_quantity == ident_value
     # TODO: axis_pts.deposit positional parameter is overridden by optional DEPOSIT parameter, is it correct?
-    # assert axis_pts.deposit == ident_value
+    assert axis_pts.deposit == ident_value
+    # assert axis_pts.deposit is None
     assert axis_pts.max_diff == float_value
     assert axis_pts.conversion == ident_value
     assert axis_pts.max_axis_points == int_value
@@ -839,12 +754,11 @@ def test_axis_pts(s,
     assert axis_pts.display_identifier is None
     assert axis_pts.read_only is None
     assert axis_pts.format is None
-    assert axis_pts.deposit is None
     assert axis_pts.byte_order is None
     assert axis_pts.function_list is None
     assert axis_pts.ref_memory_segment is None
     assert axis_pts.guard_rails is None
-    assert type(axis_pts.annotation) is list
+    assert type(axis_pts.annotation) is List
     assert axis_pts.extended_limits is None
     assert axis_pts.calibration_access is None
     assert axis_pts.ecu_address_extension is None
@@ -1062,7 +976,7 @@ def test_calibration_access(module, e, s, v):
 def test_calibration_handle(calibration_method, e, count, s, v):
     p = Parser(calibration_method[0].format(e.format(long=s)))
     calibration_handle = get_node_from_ast(p.ast, calibration_method[1])
-    assert type(calibration_handle.handle) is list
+    assert type(calibration_handle.handle) is List
     assert len(calibration_handle.handle) == count
     for handle in calibration_handle.handle:
         assert handle == v
@@ -1077,7 +991,7 @@ def test_calibration_method(module, s, string_string, string_value, long_string,
     calibration_method = get_node_from_ast(p.ast, module[1])
     assert calibration_method.method == string_value
     assert calibration_method.version == long_value
-    assert type(calibration_method.calibration_handle) is list
+    assert type(calibration_method.calibration_handle) is List
 
 
 @pytest.mark.parametrize('s', ['''
@@ -1166,9 +1080,9 @@ def test_characteristic(s,
     assert characteristic.dependent_characteristic is None
     assert characteristic.virtual_characteristic is None
     assert characteristic.ref_memory_segment is None
-    assert type(characteristic.annotation) is list
+    assert type(characteristic.annotation) is List
     assert characteristic.comparison_quantity is None
-    assert type(characteristic.axis_descr) is list
+    assert type(characteristic.axis_descr) is List
     assert characteristic.calibration_access is None
     assert characteristic.matrix_dim is None
     assert characteristic.ecu_address_extension is None
@@ -1262,7 +1176,7 @@ def test_compu_tab(s,
     assert compu_tab.long_identifier == string_value
     assert compu_tab.conversion_type == conversion_type_value
     assert compu_tab.number_value_pair == int_value
-    assert type(compu_tab.in_val_out_val) is list
+    assert type(compu_tab.in_val_out_val) is List
     assert compu_tab.in_val_out_val == in_val_out_val_value
     assert compu_tab.default_value is None
 
@@ -1307,7 +1221,7 @@ def test_compu_vtab(s,
     assert compu_vtab.long_identifier == string_value
     assert compu_vtab.conversion_type == conversion_type_value
     assert compu_vtab.number_value_pair == int_value
-    assert type(compu_vtab.in_val_out_val) is list
+    assert type(compu_vtab.in_val_out_val) is List
     assert compu_vtab.in_val_out_val == in_val_out_val_value
     assert compu_vtab.default_value is None
 
@@ -1338,7 +1252,7 @@ def test_compu_vtab_range(s,
     assert compu_vtab_range.name == ident_value
     assert compu_vtab_range.long_identifier == string_value
     assert compu_vtab_range.number_value_triple == int_value
-    assert type(compu_vtab_range.in_val_out_val) is list
+    assert type(compu_vtab_range.in_val_out_val) is List
     assert compu_vtab_range.in_val_out_val == in_val_out_val_value
     assert compu_vtab_range.default_value is None
 
@@ -1410,7 +1324,7 @@ def test_default_value(module, e, s, v):
 def test_def_characteristic(module, e, count, s, v):
     p = Parser(module[0].format(e.format(ident=s)))
     def_characteristic = get_node_from_ast(p.ast, module[1])
-    assert type(def_characteristic.identifier) is list
+    assert type(def_characteristic.identifier) is List
     assert len(def_characteristic.identifier) == count
     for identifier in def_characteristic.identifier:
         assert identifier == v
@@ -1431,7 +1345,7 @@ def test_dependent_characteristic(module, e, count, string_string, string_value,
     p = Parser(module[0].format(e.format(string=string_string, ident=ident_string)))
     dependent_characteristic = get_node_from_ast(p.ast, module[1])
     assert dependent_characteristic.formula == string_value
-    assert type(dependent_characteristic.characteristic) is list
+    assert type(dependent_characteristic.characteristic) is List
     assert len(dependent_characteristic.characteristic) == count
     for characteristic in dependent_characteristic.characteristic:
         assert characteristic == ident_value
@@ -1612,7 +1526,7 @@ def test_fix_axis_par_dist(module, e, s, v):
 def test_fix_axis_par_list(module, e, count, s, v):
     p = Parser(module[0].format(e.format(float=s)))
     fix_axis_par_list = get_node_from_ast(p.ast, module[1])
-    assert type(fix_axis_par_list.axis_pts_value) is list
+    assert type(fix_axis_par_list.axis_pts_value) is List
     assert len(fix_axis_par_list.axis_pts_value) == count
     for axis_pts_value in fix_axis_par_list.axis_pts_value:
         assert axis_pts_value == v
@@ -1742,7 +1656,7 @@ def test_frame(s,
 def test_frame_measurement(module, e, count, s, v):
     p = Parser(module[0].format(e.format(ident=s)))
     frame_measurement = get_node_from_ast(p.ast, module[1])
-    assert type(frame_measurement.identifier) is list
+    assert type(frame_measurement.identifier) is List
     assert len(frame_measurement.identifier) == count
     for identifier in frame_measurement.identifier:
         assert identifier == v
@@ -1776,7 +1690,7 @@ def test_function(s, ident_string, ident_value, string_string, string_value):
     function = p.ast.project.module[0].function[0]
     assert function.name == ident_value
     assert function.long_identifier == string_value
-    assert type(function.annotation) is list
+    assert type(function.annotation) is List
     assert function.def_characteristic is None
     assert function.ref_characteristic is None
     assert function.in_measurement is None
@@ -1838,7 +1752,7 @@ def test_group(s, ident_string, ident_value, string_string, string_value):
     group = p.ast.project.module[0].group[0]
     assert group.group_name == ident_value
     assert group.group_long_identifier == string_value
-    assert type(group.annotation) is list
+    assert type(group.annotation) is List
     assert group.root is None
     assert group.ref_characteristic is None
     assert group.ref_measurement is None
@@ -1892,7 +1806,7 @@ def test_identification(module,
 def test_in_measurement(module, e, count, s, v):
     p = Parser(module[0].format(e.format(ident=s)))
     in_measurement = get_node_from_ast(p.ast, module[1])
-    assert type(in_measurement.identifier) is list
+    assert type(in_measurement.identifier) is List
     assert len(in_measurement.identifier) == count
     for identifier in in_measurement.identifier:
         assert identifier == v
@@ -1917,7 +1831,7 @@ def test_left_shift(module, e, s, v):
 def test_loc_measurement(module, e, count, s, v):
     p = Parser(module[0].format(e.format(ident=s)))
     loc_measurement = get_node_from_ast(p.ast, module[1])
-    assert type(loc_measurement.identifier) is list
+    assert type(loc_measurement.identifier) is List
     assert len(loc_measurement.identifier) == count
     for identifier in loc_measurement.identifier:
         assert identifier == v
@@ -1964,7 +1878,7 @@ def test_max_grad(module, e, s, v):
 @pytest.mark.parametrize('module', [
     pytest.param(['characteristic', 0, 'max_refresh'], id='CHARACTERISTIC'),
     pytest.param(['measurement', 0, 'max_refresh'], id='MEASUREMENT')], indirect=True)
-@pytest.mark.parametrize('s', max_refresh_strings)
+@pytest.mark.parametrize('s', ['MAX_REFRESH {int} {long}'])
 @pytest.mark.parametrize('int_string, int_value', ints)
 @pytest.mark.parametrize('long_string, long_value', longs)
 def test_max_refresh(module, s, int_string, int_value, long_string, long_value):
@@ -2050,7 +1964,7 @@ def test_measurement(s,
     assert measurement.function_list is None
     assert measurement.ecu_address is None
     assert measurement.ref_memory_segment is None
-    assert type(measurement.annotation) is list
+    assert type(measurement.annotation) is List
     assert measurement.matrix_dim is None
     assert measurement.ecu_address_extension is None
 
@@ -2167,20 +2081,20 @@ def test_module(s, ident_string, ident_value, string_string, string_value):
     assert module.mod_par is None
     assert module.mod_common is None
     # assert type(module.if_data) is list
-    assert type(module.characteristic) is list
-    assert type(module.axis_pts) is list
-    assert type(module.measurement) is list
-    assert type(module.compu_method) is list
-    assert type(module.compu_tab) is list
-    assert type(module.compu_vtab) is list
-    assert type(module.compu_vtab_range) is list
-    assert type(module.function) is list
-    assert type(module.group) is list
-    assert type(module.record_layout) is list
+    assert type(module.characteristic) is List
+    assert type(module.axis_pts) is List
+    assert type(module.measurement) is List
+    assert type(module.compu_method) is List
+    assert type(module.compu_tab) is List
+    assert type(module.compu_vtab) is List
+    assert type(module.compu_vtab_range) is List
+    assert type(module.function) is List
+    assert type(module.group) is List
+    assert type(module.record_layout) is List
     assert module.variant_coding is None
     assert module.frame is None
-    assert type(module.user_rights) is list
-    assert type(module.unit) is list
+    assert type(module.user_rights) is List
+    assert type(module.unit) is List
 
 
 @pytest.mark.parametrize('s', ['''
@@ -2264,7 +2178,7 @@ def test_mod_par(s, string_string, string_value):
     mod_par = p.ast.project.module[0].mod_par
     assert mod_par.comment == string_value
     assert mod_par.version is None
-    assert type(mod_par.addr_epk) is list
+    assert type(mod_par.addr_epk) is List
     assert mod_par.epk is None
     assert mod_par.supplier is None
     assert mod_par.customer is None
@@ -2275,10 +2189,10 @@ def test_mod_par(s, string_string, string_value):
     assert mod_par.cpu_type is None
     assert mod_par.no_of_interfaces is None
     assert mod_par.ecu_calibration_offset is None
-    assert type(mod_par.calibration_method) is list
-    assert type(mod_par.memory_layout) is list
-    assert type(mod_par.memory_segment) is list
-    assert type(mod_par.system_constant) is list
+    assert type(mod_par.calibration_method) is List
+    assert type(mod_par.memory_layout) is List
+    assert type(mod_par.memory_segment) is List
+    assert type(mod_par.system_constant) is List
 
 
 @pytest.mark.parametrize('module', [
@@ -2424,7 +2338,7 @@ def test_offset_z(module, s, int_string, int_value, data_type_string, data_type_
 def test_out_measurement(module, s, identifier_count, ident_string, ident_value):
     p = Parser(module[0].format(s.format(ident=ident_string)))
     out_measurement = get_node_from_ast(p.ast, module[1])
-    assert type(out_measurement.identifier) is list
+    assert type(out_measurement.identifier) is List
     assert len(out_measurement.identifier) == identifier_count
     for identifier in out_measurement.identifier:
         assert identifier == ident_value
@@ -2616,7 +2530,7 @@ def test_record_layout(s, ident_string, ident_value):
     assert record_layout.alignment_long is None
     assert record_layout.alignment_float32_ieee is None
     assert record_layout.alignment_float64_ieee is None
-    assert type(record_layout.reserved) is list
+    assert type(record_layout.reserved) is List
 
 
 @pytest.mark.parametrize('module', [
@@ -2628,7 +2542,7 @@ def test_record_layout(s, ident_string, ident_value):
 def test_ref_characteristic(module, s, identifier_count, ident_string, ident_value):
     p = Parser(module[0].format(s.format(ident=ident_string)))
     ref_characteristic = get_node_from_ast(p.ast, module[1])
-    assert type(ref_characteristic.identifier) is list
+    assert type(ref_characteristic.identifier) is List
     assert len(ref_characteristic.identifier) == identifier_count
     for identifier in ref_characteristic.identifier:
         assert identifier == ident_value
@@ -2643,7 +2557,7 @@ def test_ref_characteristic(module, s, identifier_count, ident_string, ident_val
 def test_ref_group(module, e, count, s, v):
     p = Parser(module[0].format(e.format(ident=s)))
     ref_group = get_node_from_ast(p.ast, module[1])
-    assert type(ref_group.identifier) is list
+    assert type(ref_group.identifier) is List
     assert len(ref_group.identifier) == count
     for identifier in ref_group.identifier:
         assert identifier == v
@@ -2657,7 +2571,7 @@ def test_ref_group(module, e, count, s, v):
 def test_ref_measurement(module, s, identifier_count, ident_string, ident_value):
     p = Parser(module[0].format(s.format(ident=ident_string)))
     ref_measurement = get_node_from_ast(p.ast, module[1])
-    assert type(ref_measurement.identifier) is list
+    assert type(ref_measurement.identifier) is List
     assert len(ref_measurement.identifier) == identifier_count
     for identifier in ref_measurement.identifier:
         assert identifier == ident_value
@@ -2699,7 +2613,7 @@ def test_reserved(module,
     p = Parser(module[0].format(s.format(int=int_string,
                                          data_size=data_size_string)))
     reserved = get_node_from_ast(p.ast, module[1])
-    assert type(reserved) is list
+    assert type(reserved) is List
     assert len(reserved) == reserved_count
     for e in reserved:
         assert e.position == int_value
@@ -2887,7 +2801,7 @@ def test_src_addr_z(module, e, int_string, int_value, data_type_string, data_typ
 def test_sub_function(module, e, count, s, v):
     p = Parser(module[0].format(e.format(ident=s)))
     sub_function = get_node_from_ast(p.ast, module[1])
-    assert type(sub_function.identifier) is list
+    assert type(sub_function.identifier) is List
     assert len(sub_function.identifier) == count
     for identifier in sub_function.identifier:
         assert identifier == v
@@ -2902,7 +2816,7 @@ def test_sub_function(module, e, count, s, v):
 def test_sub_group(module, e, count, s, v):
     p = Parser(module[0].format(e.format(ident=s)))
     sub_group = get_node_from_ast(p.ast, module[1])
-    assert type(sub_group.identifier) is list
+    assert type(sub_group.identifier) is List
     assert len(sub_group.identifier) == count
     for identifier in sub_group.identifier:
         assert identifier == v
@@ -2979,7 +2893,7 @@ def test_user_rights(s, ident_string, ident_value):
         read_only=empty_string))))
     user_rights = p.ast.project.module[0].user_rights[0]
     assert user_rights.user_level_id == ident_value
-    assert type(user_rights.ref_group) is list
+    assert type(user_rights.ref_group) is List
     assert user_rights.read_only is None
 
 
@@ -2992,7 +2906,7 @@ def test_user_rights(s, ident_string, ident_value):
 def test_var_address(variant_coding, s, v):
     p = Parser(variant_coding[0].format(s))
     var_address = get_node_from_ast(p.ast, variant_coding[1])
-    assert type(var_address.address) is list
+    assert type(var_address.address) is List
     assert var_address.address == v
 
 
@@ -3011,7 +2925,7 @@ def test_var_characteristic(module, s, ident_string, ident_value, criterion_name
                                          var_address=empty_string)))
     var_characteristic = get_node_from_ast(p.ast, module[1])
     assert var_characteristic.name == ident_value
-    assert type(var_characteristic.criterion_name) is list
+    assert type(var_characteristic.criterion_name) is List
     assert var_characteristic.criterion_name == criterion_name_value
     assert var_characteristic.var_address is None
 
@@ -3041,7 +2955,7 @@ def test_var_criterion(module, s, ident_string, ident_value, string_string, stri
     var_criterion = get_node_from_ast(p.ast, module[1])
     assert var_criterion.name == ident_value
     assert var_criterion.long_identifier == string_value
-    assert type(var_criterion.value) is list
+    assert type(var_criterion.value) is IdentList
     assert var_criterion.value == value_value
     assert var_criterion.var_measurement is None
     assert var_criterion.var_selection_characteristic is None
@@ -3057,7 +2971,7 @@ def test_var_criterion(module, s, ident_string, ident_value, string_string, stri
 def test_var_forbidden_comb(module, e, s, v):
     p = Parser(module[0].format(e.format(s)))
     var_forbidden_comb = get_node_from_ast(p.ast, module[1])
-    assert type(var_forbidden_comb.criterion) is list
+    assert type(var_forbidden_comb.criterion) is List
     assert var_forbidden_comb.criterion == v
 
 
@@ -3117,9 +3031,9 @@ def test_variant_coding(s):
     variant_coding = p.ast.project.module[0].variant_coding
     assert variant_coding.var_separator is None
     assert variant_coding.var_naming is None
-    assert type(variant_coding.var_criterion) is list
-    assert type(variant_coding.var_forbidden_comb) is list
-    assert type(variant_coding.var_characteristic) is list
+    assert type(variant_coding.var_criterion) is List
+    assert type(variant_coding.var_forbidden_comb) is List
+    assert type(variant_coding.var_characteristic) is List
 
 
 @pytest.mark.parametrize('project', [pytest.param(['header', 'version'], id='HEADER')], indirect=True)
@@ -3141,7 +3055,7 @@ def test_version(project, e, s, v):
 def test_virtual(module, e, count, s, v):
     p = Parser(module[0].format(e.format(ident=s)))
     virtual = get_node_from_ast(p.ast, module[1])
-    assert type(virtual.measuring_channel) is list
+    assert type(virtual.measuring_channel) is List
     assert len(virtual.measuring_channel) == count
     for measuring_channel in virtual.measuring_channel:
         assert measuring_channel == v

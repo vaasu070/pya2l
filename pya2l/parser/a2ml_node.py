@@ -472,6 +472,4 @@ class Enumerator(A2MLNode):
     def get_class(self, tokens): return super(Enumerator, self).get_class(tokens)
 
     def dump(self, n=0):
-        yield n, '"{k}"{e}{c}'.format(k=self.keyword,
-                                      e=' = ' if self.constant is not None else '',
-                                      c=self.constant)
+        yield n, '"{k}"{c}'.format(k=self.keyword, c='' if self.constant is None else ' = {}'.format(self.constant))

@@ -14,36 +14,23 @@ from pya2l.parser.grammar.lexer import tokens as lex_tokens, lexer, token_functi
 from pya2l.parser.node import node_factory
 from pya2l.parser.a2l_node import *
 from pya2l.parser.a2ml_node import *
-from pya2l.parser.type import *
+from pya2l.parser.a2l_type import *
 
 
 class A2lParser(object):
     tokens = lex_tokens
 
-    def __init__(self, string):
+    def __init__(self, string, include_dir=tuple()):
         self.ast = None
         self.a2ml = A2ML()
         lexer.lineno = 1
-        self._yacc = yacc.yacc(debug=True,
+        lexer.include_dir = include_dir
+        self._yacc = yacc.yacc(debug=False,
+                               optimize=True,
                                module=self,
-                               optimize=False,
-                               outputdir=os.path.dirname(os.path.realpath(__file__)))
+                               tabmodule='parser_tab',
+                               outputdir=os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
         self._yacc.parse(string, tokenfunc=token_function)
-
-    def nodes(self, node_name):
-        if self.ast:
-            return self.ast.nodes(node_name)
-        else:
-            return []
-
-    def dump(self, indent=4, line_ending='\n', indent_char=' '):
-        if self.ast and hasattr(self.ast, 'project'):
-            result = list()
-            for indentation_level, string in self.ast.project.dump():
-                result.append(((indent_char * indent) * indentation_level) + string)
-            return line_ending.join(result)
-        else:
-            return ''
 
     @staticmethod
     def p_error(p):

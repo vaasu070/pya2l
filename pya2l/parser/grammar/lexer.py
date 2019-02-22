@@ -9,7 +9,7 @@ import os
 import ply.lex as lex
 
 from pya2l.parser.exception import A2lLexerException
-from pya2l.parser.type import String
+from pya2l.parser.a2l_type import String
 
 a2l_keywords = dict((k, k) for k in {
     'A2ML',
@@ -396,13 +396,23 @@ def t_ifdata_I(token):
 lexer_stack = list()
 
 
-@lex.TOKEN(r'\/include\s*?"[^"]+"')
+@lex.TOKEN(r'\/include\s*?(("[^"]+")|([^ ]+))')
 def t_ANY_ignore_include(token):
     filename = token.value.replace('/include', '').strip(' "')
     new_lexer = token.lexer.clone()
     new_lexer.lineno, new_lexer.lexpos = 1, 0
-    with open(filename, 'r') as fp:
-        new_lexer.input(fp.read())
+    string = None
+    for directory in type(new_lexer.include_dir)(['']) + new_lexer.include_dir:
+        try:
+            with open(os.path.join(directory, filename), 'r') as fp:
+                string = fp.read()
+        except IOError:
+            continue
+        else:
+            break
+    if string is None:
+        raise IOError('unable to find included file "{}"'.format(str(filename)))
+    new_lexer.input(string)
     lexer_stack.append(new_lexer)
     return new_lexer.token()
 
@@ -411,7 +421,7 @@ def t_ANY_error(token):
     raise A2lLexerException(token.value[0], token.lineno, token.lexpos)
 
 
-lexer = lex.lex(optimize=False, outputdir=os.path.dirname(os.path.realpath(__file__)), lextab='lextab')
+lexer = lex.lex(debug=False, optimize=True, outputdir=os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'), lextab='lexer_tab')
 
 
 def token_function():

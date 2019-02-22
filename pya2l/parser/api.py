@@ -5,7 +5,7 @@
 @date: 19.02.2019
 """
 
-from pya2l.parser.grammar import A2lParser
+from pya2l.parser.grammar.parser import A2lParser
 
 
 class Parser(A2lParser):
@@ -18,11 +18,14 @@ class Parser(A2lParser):
         else:
             return []
 
+    def dict(self):
+        if self.ast:
+            return self.ast.dict()
+        else:
+            return dict()
+
     def dump(self, indent=4, line_ending='\n', indent_char=' '):
-        if self.ast and hasattr(self.ast, 'project'):
-            result = list()
-            for indentation_level, string in self.ast.project.dump():
-                result.append(((indent_char * indent) * indentation_level) + string)
-            return line_ending.join(result)
+        if self.ast:
+            return line_ending.join((((indent_char * indent) * i) + s) for i, s in self.ast.dump())
         else:
             return ''

@@ -60,7 +60,7 @@ nodes = [
             {
                 'multiple': True,
                 'name': 'text',
-                'type': 'list'
+                'type': 'List'
             }
         ],
         'name': 'ANNOTATION_TEXT'
@@ -218,10 +218,6 @@ nodes = [
             {
                 'name': 'FORMAT',
                 'type': 'FORMAT'
-            },
-            {
-                'name': 'DEPOSIT',
-                'type': 'DEPOSIT'
             },
             {
                 'name': 'BYTE_ORDER',
@@ -1315,7 +1311,7 @@ nodes = [
             },
             {
                 'name': 'offset',
-                'type': 'list'
+                'type': 'Offset'
             }
         ],
         'kwargs': [
@@ -1359,7 +1355,7 @@ nodes = [
             },
             {
                 'name': 'offset',
-                'type': 'list'
+                'type': 'Offset'
             }
         ],
         'kwargs': [
@@ -2335,7 +2331,7 @@ nodes = [
             },
             {
                 'name': 'value',
-                'type': 'list'
+                'type': 'IdentList'
             }
         ],
         'kwargs': [
@@ -2865,14 +2861,14 @@ nodes = [
 ]
 keywords = ['FORMAT', 'READ_ONLY', 'SIGN_EXTEND', 'GUARD_RAILS', 'ROOT', 'READ_WRITE']
 cls_template = """\"\"\"
-@project: parser
+@project: pya2l
 @file: a2l_node.py
 @author: Guillaume Sottas
 @date: 05.04.2018
-\"\"\"
+\"\"\"{{=<< >>=}}
 
 from pya2l.parser.node import ASTNode, node_type
-from pya2l.parser.type import *
+from pya2l.parser.a2l_type import *
 
 enum_index_mode = Ident
 enum_attribute = Ident
@@ -2892,10 +2888,18 @@ class A2lNode(ASTNode):
         return super(A2lNode, self).__setattr__(key, value)
 
     def dump(self, n=0):
-        yield n, '/begin {node}'.format(node=self.node)
-        for e in super(A2lNode, self).dump(n=n + 1):
-            yield e
-        yield n, '/end {node}'.format(node=self.node)
+        p, k = self.positionals(), self.keywords()
+        if len(k) and len(p):
+            yield n, '/begin {} {}'.format(self.node, ' '.join('{}' for _ in p)).format(*[next(x)[1] for x in [e.dump() for e in p]]).rstrip()
+        elif len(k):
+            yield n, '/begin {}'.format(self.node)
+        else:
+            yield n, '{} {}'.format(self.node, ' '.join('{}' for _ in p)).format(*[next(x)[1] for x in [e.dump() for e in p]]).rstrip()
+        for o in filter(lambda x: x not in (None, dict()), k):
+            for e in o.dump(n=n+1):
+                yield e
+        if len(k):
+            yield n, '/end {}'.format(self.node)
 
 
 class A2lTagNode(A2lNode):
@@ -2912,6 +2916,12 @@ class A2lFile(A2lNode):
         self.a2ml_version = None
         self.project = None
         super(A2lFile, self).__init__(*args)
+
+    def dump(self, n=0):
+        for p in (getattr(self, p) for p in self.properties):
+            if p is not None:
+                for e in p.dump(n=0):
+                    yield e
 
 
 @node_type('IF_DATA')
@@ -2956,46 +2966,57 @@ class A2ML(A2lNode):
     def dump(self, n=0):
         return (e for e in super(A2ML, self).dump(n=n))
 
-{{#cls}}
+<<#cls>>
 
-@node_type('{{name}}')
-{{^tagged}}
-class {{name}}(A2lNode):
-    __slots__ = {{#slots}}'{{name}}', {{/slots}}{{^slots}}tuple(){{/slots}}
+@node_type('<<name>>')
+<<^tagged>>
+class <<name>>(A2lNode):
+    __slots__ = <<#slots>>'<<name>>', <</slots>><<^slots>>tuple()<</slots>>
 
-    def __init__(self, {{#args}}{{name}}, {{/args}}{{#has_kwargs}}args{{/has_kwargs}}):
-        {{#args}}
-        self.{{name}} = {{type}}({{name}}){{#remark}}  # {{.}}{{/remark}}
-        {{/args}}
-        {{#kwargs}}
-        {{#if_data}}
-        self.{{name}} = dict()
-        {{/if_data}}
-        {{^if_data}}
-        self.{{name}} = {{#multiple}}list(){{/multiple}}{{^multiple}}None{{/multiple}}{{#remark}}  # {{.}}{{/remark}}
-        {{/if_data}}
-        {{/kwargs}}
-        super({{name}}, self).__init__({{#has_kwargs}}*args{{/has_kwargs}})
-{{/tagged}}
-{{#tagged}}
-class {{name}}({{#args}}{{type}}{{/args}}):
-    def __init__(self, {{#args}}{{name}}{{/args}}):
-        super({{name}}, self).__init__(self, {{#args}}{{name}}{{/args}})
+    def __init__(self, <<#args>><<name>>, <</args>><<#has_kwargs>>args<</has_kwargs>>):
+        <<#args>>
+        self.<<name>> = <<type>>(<<name>>)<<#remark>>  # <<.>><</remark>>
+        <</args>>
+        <<#kwargs>>
+        <<#if_data>>
+        self.<<name>> = dict()
+        <</if_data>>
+        <<^if_data>>
+        self.<<name>> = <<#multiple>>List()<</multiple>><<^multiple>>None<</multiple>><<#remark>>  # <<.>><</remark>>
+        <</if_data>>
+        <</kwargs>>
+        super(<<name>>, self).__init__(<<#has_kwargs>>*args<</has_kwargs>>)
+
+    def positionals(self):
+        return [e for e in (<<#args>>self.<<name>>,
+                            <</args>>)]
+
+    def keywords(self):
+        return [getattr(self, e) for e in sorted((<<#kwargs>>'<<name>>',
+                                                  <</kwargs>>))]
+<</tagged>>
+<<#tagged>>
+class <<name>>(<<#args>><<type>><</args>>):
+    def __init__(self, <<#args>><<name>><</args>>):
+        super(<<name>>, self).__init__(self, <<#args>><<name>><</args>>)
 
     @property
     def node(self):
         return self._node
 
-    def __str__(self):
-        return '{} {}'.format(self.node, super({{name}}, self).__str__())
-{{/tagged}}
+    def dump(self, n=0):
+        yield n, '{}<<#args>> {}<</args>>'.format(self.node, next(super(<<name>>, self).dump())[1])
+<</tagged>>
 
-{{/cls}}"""
+<</cls>>"""
 
 for cls_config in nodes:
     cls_config['name_lower'] = cls_config['name'].lower()
     if len(cls_config['args']) == 1 and len(cls_config['kwargs']) == 0:
         cls_config['tagged'] = True
+    elif len(cls_config['args']) > 0 and len(cls_config['kwargs']) > 0:
+        cls_config['complex'] = True
+    cls_config['positionals'] = cls_config['args'] != 0
     for arg in cls_config['args']:
         arg['name'] = arg['name'].lower()
         arg['type_lower'] = arg['type'].lower()
@@ -3012,7 +3033,7 @@ with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', 'a2l_n
 
 cls_test_template = """
 \"\"\"{{=<< >>=}}
-@project: parser
+@project: pya2l
 @file: a2l_node_test.py
 @author: Guillaume Sottas
 @date: 13.02.2019
@@ -3048,11 +3069,14 @@ from pya2l.parser.type import *
 <</cls>>
 
 <<#cls>>
-def test_<<name_lower>>():
-    pytest.xfail('implement me...')
 
+@pytest.mark.parametrize('a, s', [pytest.param([], '')])
+def test_<<name_lower>>(a, s):
+    n = <<name>>(*a)
+    assert concatenate_generator(n.dump()) == s
 
 <</cls>>
+
 
 """
 

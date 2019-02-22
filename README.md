@@ -7,8 +7,8 @@
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://raw.githubusercontent.com/Sauci/pya2l/master/LICENSE.md) [![Gitter](https://img.shields.io/gitter/room/Sauci/pya2l.svg)](https://gitter.im/pya2l/Lobby)
 
 ## package description
-the purpose of this package is to provide an easy way to access and navigate in [a2l](https://www.asam.net/standards/detail/mcd-2-mc/) formatted file.  
-once the file has been loaded, a tree of Python objects is generated, allowing the user to access nodes.  
+the purpose of this package is to provide an easy way to access and navigate in [**a2l**](https://www.asam.net/standards/detail/mcd-2-mc/) formatted file.  
+once the file has been loaded, a tree of **Python** objects is generated, allowing the user to access nodes.  
   
 ## installation  
   
@@ -123,6 +123,20 @@ assert python_object_to_json_string(p.ast.project.json, sort_keys=True, indent=4
 }"""
 
 ```
+
+## release notes
+bellow, a list of changes for the different released versions. this list might be updated in case a bug/feature is
+missing in the list.
+- **0.0.1**
+    - initial release.
+
+- **0.0.2**
+    - fixed some incorrect grammar.
+    - added support for dynamic **A2ML** node parsing.
+    - added support for dynamic **IF_DATA** node(s) parsing.
+    - added support for ```/include``` statement.
+    - added ```Parser.dict``` method, which converts the parsed **a2l** string into a **Python** dictionary.
+    - added ```Parser.dump``` method, which converts the parsed **a2l** string back to **a2l**.
 
 ## limitations
 currently, the a2ml-formatted content is only described in the grammar, but the content of the node cannot be

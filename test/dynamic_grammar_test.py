@@ -1,18 +1,18 @@
-"""
+'''
 @project: pya2l
 @file: dynamic_grammar_test.py
 @author: Guillaume Sottas
 @date: 28.12.2018
-"""
+'''
 
 import os
 import pytest
 
-from pya2l.parser.grammar.parser import A2lParser as Parser
+from pya2l import Parser
 
 
 def generate_a2l_string(a2ml_string='', if_data_string=''):
-    return """
+    return '''
         /begin PROJECT project ""
             /begin MODULE module ""
                 /begin A2ML
@@ -21,7 +21,7 @@ def generate_a2l_string(a2ml_string='', if_data_string=''):
                 {if_data_string}
             /end MODULE
         /end PROJECT
-    """.format(a2ml_string=a2ml_string, if_data_string=if_data_string)
+    '''.format(a2ml_string=a2ml_string, if_data_string=if_data_string)
 
 
 with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'input', 'asap2_1_61.aml'), 'r') as fp:
@@ -34,7 +34,7 @@ a2ml_strings = (
     pytest.param(asap2_1_61_shared_type_definition, id='ASAP2 version 1.61 with shared type definitions'))
 
 
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin PROJECT project ""
             /begin MODULE module ""
                 /begin A2ML
@@ -99,7 +99,7 @@ a2ml_strings = (
                 /end FRAME
             /end MODULE
         /end PROJECT
-        """, id='fully defined node'),))
+        ''', id='fully defined node'),))
 def test_if_data_static_node(a2l_string):
     p = Parser(a2l_string)
     assert p.ast.project.module[0].if_data.if_data_module[0] == 0
@@ -112,7 +112,7 @@ def test_if_data_static_node(a2l_string):
 
 
 @pytest.mark.parametrize('a2ml_string', a2ml_strings)
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin IF_DATA XCP
             /begin PROTOCOL_LAYER
                 1
@@ -136,7 +136,7 @@ def test_if_data_static_node(a2l_string):
                 SEED_AND_KEY_EXTERNAL_FUNCTION seed_and_key_external_function
             /end PROTOCOL_LAYER
         /end IF_DATA
-        """, id='fully defined node'),))
+        ''', id='fully defined node'),))
 def test_a2ml_protocol_layer_node(a2ml_string, a2l_string):
     p = Parser(generate_a2l_string(a2ml_string=a2ml_string, if_data_string=a2l_string))
 
@@ -173,7 +173,7 @@ def test_a2ml_protocol_layer_node(a2ml_string, a2l_string):
 
 
 @pytest.mark.parametrize('a2ml_string', a2ml_strings)
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin IF_DATA XCP
             /begin SEGMENT
                 1
@@ -213,7 +213,7 @@ def test_a2ml_protocol_layer_node(a2ml_string, a2l_string):
                 PGM_VERIFY 17
             /end SEGMENT
         /end IF_DATA
-        """, id='fully defined node'),))
+        ''', id='fully defined node'),))
 def test_a2ml_segment_node(a2ml_string, a2l_string):
     p = Parser(generate_a2l_string(a2ml_string=a2ml_string, if_data_string=a2l_string))
 
@@ -257,7 +257,7 @@ def test_a2ml_segment_node(a2ml_string, a2l_string):
 
 
 @pytest.mark.parametrize('a2ml_string', a2ml_strings)
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin IF_DATA XCP
             /begin DAQ
                 STATIC
@@ -346,7 +346,7 @@ def test_a2ml_segment_node(a2ml_string, a2l_string):
                 /end EVENT
             /end DAQ
         /end IF_DATA
-        """, id='fully defined node'),))
+        ''', id='fully defined node'),))
 def test_a2ml_daq_node(a2ml_string, a2l_string):
     p = Parser(generate_a2l_string(a2ml_string=a2ml_string, if_data_string=a2l_string))
 
@@ -456,14 +456,14 @@ def test_a2ml_daq_node(a2ml_string, a2l_string):
 
 
 @pytest.mark.parametrize('a2ml_string', a2ml_strings)
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin IF_DATA XCP
             /begin PAG
                 1
                 FREEZE_SUPPORTED
             /end PAG
         /end IF_DATA
-        """, id='fully defined node'),))
+        ''', id='fully defined node'),))
 def test_a2ml_pag_node(a2ml_string, a2l_string):
     p = Parser(generate_a2l_string(a2ml_string=a2ml_string, if_data_string=a2l_string))
 
@@ -484,7 +484,7 @@ def test_a2ml_pag_node(a2ml_string, a2l_string):
 
 
 @pytest.mark.parametrize('a2ml_string', a2ml_strings)
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin IF_DATA XCP
             /begin PGM
                 PGM_MODE_ABSOLUTE
@@ -517,7 +517,7 @@ def test_a2ml_pag_node(a2ml_string, a2l_string):
                     INTERLEAVED 17
             /end PGM
         /end IF_DATA
-        """, id='fully defined node'),))
+        ''', id='fully defined node'),))
 def test_a2ml_pgm_node(a2ml_string, a2l_string):
     p = Parser(generate_a2l_string(a2ml_string=a2ml_string, if_data_string=a2l_string))
 
@@ -557,7 +557,7 @@ def test_a2ml_pgm_node(a2ml_string, a2l_string):
 
 
 @pytest.mark.parametrize('a2ml_string', a2ml_strings)
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin IF_DATA XCP
             /begin DAQ_EVENT
                 /begin FIXED_EVENT_LIST
@@ -576,7 +576,7 @@ def test_a2ml_pgm_node(a2ml_string, a2l_string):
                 /end VARIABLE
             /end DAQ_EVENT
         /end IF_DATA
-        """, id='fully defined node'),))
+        ''', id='fully defined node'),))
 def test_a2ml_daq_event_node(a2ml_string, a2l_string):
     p = Parser(generate_a2l_string(a2ml_string=a2ml_string, if_data_string=a2l_string))
 
@@ -601,7 +601,7 @@ def test_a2ml_daq_event_node(a2ml_string, a2l_string):
 
 
 @pytest.mark.parametrize('a2ml_string', a2ml_strings)
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin IF_DATA XCP
             /begin XCP_ON_CAN
                 1
@@ -627,7 +627,7 @@ def test_a2ml_daq_event_node(a2ml_string, a2l_string):
                 /end DAQ_LIST_CAN_ID
             /end XCP_ON_CAN
         /end IF_DATA
-        """, id='fully defined node'),))
+        ''', id='fully defined node'),))
 def test_a2ml_xcp_on_can_node(a2ml_string, a2l_string):
     p = Parser(generate_a2l_string(a2ml_string=a2ml_string, if_data_string=a2l_string))
 
@@ -669,7 +669,7 @@ def test_a2ml_xcp_on_can_node(a2ml_string, a2l_string):
 
 
 @pytest.mark.parametrize('a2ml_string', a2ml_strings)
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin IF_DATA XCP
             /begin XCP_ON_SxI
                 1
@@ -682,7 +682,7 @@ def test_a2ml_xcp_on_can_node(a2ml_string, a2l_string):
                 NO_CHECKSUM
             /end XCP_ON_SxI
         /end IF_DATA
-        """, id='ASAP2 version 1.61'),))
+        ''', id='ASAP2 version 1.61'),))
 def test_a2ml_xcp_on_sxi_node(a2ml_string, a2l_string):
     p = Parser(generate_a2l_string(a2ml_string=a2ml_string, if_data_string=a2l_string))
 
@@ -719,7 +719,7 @@ def test_a2ml_xcp_on_sxi_node(a2ml_string, a2l_string):
 
 
 @pytest.mark.parametrize('a2ml_string', a2ml_strings)
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin IF_DATA XCP
             /begin XCP_ON_TCP_IP
                 1
@@ -728,7 +728,7 @@ def test_a2ml_xcp_on_sxi_node(a2ml_string, a2l_string):
                 ADDRESS s2
             /end XCP_ON_TCP_IP
         /end IF_DATA
-        """, id='ASAP2 version 1.61'),))
+        ''', id='ASAP2 version 1.61'),))
 def test_a2ml_xcp_on_tcp_ip_node(a2ml_string, a2l_string):
     p = Parser(generate_a2l_string(a2ml_string=a2ml_string, if_data_string=a2l_string))
 
@@ -757,7 +757,7 @@ def test_a2ml_xcp_on_tcp_ip_node(a2ml_string, a2l_string):
 
 
 @pytest.mark.parametrize('a2ml_string', a2ml_strings)
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin IF_DATA XCP
             /begin XCP_ON_UDP_IP
                 1
@@ -766,7 +766,7 @@ def test_a2ml_xcp_on_tcp_ip_node(a2ml_string, a2l_string):
                 ADDRESS s2
             /end XCP_ON_UDP_IP
         /end IF_DATA
-        """, id='ASAP2 version 1.61'),))
+        ''', id='ASAP2 version 1.61'),))
 def test_a2ml_xcp_on_udp_ip_node(a2ml_string, a2l_string):
     p = Parser(generate_a2l_string(a2ml_string=a2ml_string, if_data_string=a2l_string))
 
@@ -795,7 +795,7 @@ def test_a2ml_xcp_on_udp_ip_node(a2ml_string, a2l_string):
 
 
 @pytest.mark.parametrize('a2ml_string', a2ml_strings)
-@pytest.mark.parametrize('a2l_string', (pytest.param("""
+@pytest.mark.parametrize('a2l_string', (pytest.param('''
         /begin IF_DATA XCP
             /begin XCP_ON_USB
                 1
@@ -847,7 +847,7 @@ def test_a2ml_xcp_on_udp_ip_node(a2ml_string, a2l_string):
                 /end DAQ_LIST_USB_ENDPOINT
             /end XCP_ON_USB
         /end IF_DATA
-        """, id='ASAP2 version 1.61'),))
+        ''', id='ASAP2 version 1.61'),))
 def test_a2ml_xcp_on_usb_node(a2ml_string, a2l_string):
     p = Parser(generate_a2l_string(a2ml_string=a2ml_string, if_data_string=a2l_string))
 

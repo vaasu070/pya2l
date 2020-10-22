@@ -7,7 +7,6 @@
 
 import os
 import ply.yacc as yacc
-
 from .lexer import tokens as lex_tokens
 from .node import *
 
@@ -33,6 +32,7 @@ class A2lParser(object):
         self.tree = None
         for node, cls in custom_classes.items():
             node_to_class[node] = cls
+      
         self._yacc = yacc.yacc(debug=True, module=self, optimize=True,
                                outputdir=os.path.dirname(os.path.realpath(__file__)))
         self._yacc.parse(string)
@@ -120,7 +120,8 @@ class A2lParser(object):
 
     @staticmethod
     def p_a2ml_block_definition(p):
-        """a2ml_block_definition : block a2ml_tag a2ml_type_name"""
+        """a2ml_block_definition : block a2ml_tag a2ml_type_name
+                                 | block a2ml_tag PARENTHESE_OPEN a2ml_member PARENTHESE_CLOSE ASTERISK"""
 
     @staticmethod
     def p_a2ml_enum_type_name(p):
@@ -754,6 +755,7 @@ class A2lParser(object):
         """daq_optional : daq_list
                         | event
                         | timestamp_supported
+                        | stim
                         | optimisation_type
                         | address_extension
                         | identification_field_type
@@ -905,6 +907,11 @@ class A2lParser(object):
     def p_timestamp_supported(p):
         """timestamp_supported : begin TIMESTAMP_SUPPORTED NUMERIC IDENT IDENT timestamp_fixed end TIMESTAMP_SUPPORTED"""
         p[0] = a2l_node_factory(*p[2:7])
+
+    @staticmethod
+    def p_stim(p):
+        """stim : begin STIM GRANULARITY_ODT_ENTRY_SIZE_STIM_BYTE NUMERIC end STIM"""
+        
 
     @staticmethod
     def p_timestamp_fixed(p):
@@ -1129,6 +1136,7 @@ class A2lParser(object):
                                | alignment_byte
                                | alignment_word
                                | alignment_long
+                               | alignment_int64
                                | alignment_float32_ieee
                                | alignment_float64_ieee"""
         p[0] = p.slice[1].type, p[1]
@@ -1721,6 +1729,7 @@ class A2lParser(object):
                                    | bit_mask
                                    | function_list
                                    | number
+                                   | symbol_link
                                    | extended_limits
                                    | read_only
                                    | guard_rails
@@ -1814,7 +1823,7 @@ class A2lParser(object):
     def p_measurement(p):
         """measurement : begin MEASUREMENT IDENT STRING datatype IDENT NUMERIC NUMERIC NUMERIC NUMERIC measurement_optional_list_optional end MEASUREMENT"""
         p[0] = a2l_node_factory(*p[2:12])
-
+       
     @staticmethod
     def p_measurement_optional(p):
         """measurement_optional : display_identifier
@@ -1828,6 +1837,7 @@ class A2lParser(object):
                                 | virtual
                                 | function_list
                                 | ecu_address
+                                | symbol_link
                                 | error_mask
                                 | ref_memory_segment
                                 | annotation
@@ -1842,6 +1852,7 @@ class A2lParser(object):
         """measurement_optional_list : measurement_optional
                                      | measurement_optional measurement_optional_list"""
         try:
+           
             p[0] = [p[1]] + p[2]
         except IndexError:
             p[0] = [p[1]]
@@ -2068,6 +2079,11 @@ class A2lParser(object):
     @staticmethod
     def p_ecu_address(p):
         """ecu_address : ECU_ADDRESS NUMERIC"""
+        p[0] = p[2]
+
+    @staticmethod
+    def p_symbol_link(p):
+        """symbol_link : SYMBOL_LINK STRING NUMERIC"""
         p[0] = p[2]
 
     @staticmethod
@@ -2540,6 +2556,7 @@ class A2lParser(object):
                                   | alignment_long
                                   | alignment_float32_ieee
                                   | alignment_float64_ieee
+                                  | alignment_int64
                                   | reserved"""
         p[0] = p.slice[1].type, p[1]
 
@@ -2745,6 +2762,11 @@ class A2lParser(object):
     @staticmethod
     def p_alignment_long(p):
         """alignment_long : ALIGNMENT_LONG NUMERIC"""
+        p[0] = p[2]
+
+    @staticmethod
+    def p_alignment_int64(p):
+        """alignment_int64 : ALIGNMENT_INT64 NUMERIC"""
         p[0] = p[2]
 
     @staticmethod
@@ -3056,3 +3078,28 @@ class A2lParser(object):
     def p_empty(p):
         """empty :"""
         p[0] = None
+
+
+
+# a2l_string = open(r'C:\Users\vaasu\Desktop\Data\DASY_BASE_01_Copy.a2l', 'r').read()
+
+
+# a2l_string = """
+#     /begin PROJECT project_name "example project"
+#         /begin MODULE first_module "first module long identifier"
+#          /begin MEASUREMENT AyRaw_loc.VseDASy "local recording of AyRaw for measurement purpose [S001_VseDASy_ECU_CSW_BB00001_0_NOINIT_RAM.V2__C_Cl5]"
+#         FLOAT32_IEEE VseDsm_ECU_CSW_BB00001_variantIsSet_ident 1 0 -1E+37 1E+37
+#         ECU_ADDRESS 0x40008770
+#         ECU_ADDRESS_EXTENSION 0x0
+#         FORMAT "%42.15"
+#         SYMBOL_LINK "_S001_VseDASy_ECU_CSW_BB00001_0_NOINIT_RAM._V2__C_Cl5" 0
+#         /end MEASUREMENT
+#         /end MODULE
+#     /end PROJECT
+# """
+
+# tic()
+# a2l = A2lParser(a2l_string)
+# print(toc())
+# for i, node in enumerate(a2l.tree.project.module[0].get_node("MEASUREMENT")):
+#     print(node.name)

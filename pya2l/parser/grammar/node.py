@@ -294,7 +294,7 @@ class Characteristic(A2lNode):
                 'upper_limit', 'display_identifier', 'format', 'byte_order', 'bit_mask', 'function_list', 'number', \
                 'extended_limits', 'read_only', 'guard_rails', 'map_list', 'max_refresh', 'dependent_characteristic', \
                 'virtual_characteristic', 'ref_memory_segment', 'annotation', 'comparison_quantity', \
-                'if_data_characteristic', 'axis_descr', 'calibration_access', 'matrix_dim', 'ecu_address_extension'
+                'if_data_characteristic', 'axis_descr', 'calibration_access', 'matrix_dim', 'ecu_address_extension','symbol_link'
 
     def __init__(self, name, long_identifier, type, address, deposit, max_diff, conversion, lower_limit,
                  upper_limit, args):
@@ -313,6 +313,7 @@ class Characteristic(A2lNode):
         self.bit_mask = None
         self.function_list = None
         self.number = None
+        self.symbol_link=None
         self.extended_limits = None
         self.read_only = None
         self.guard_rails = None
@@ -423,7 +424,7 @@ class Daq(A2lNode):
     __slots__ = 'daq_config_type', 'max_daq', 'max_event_channel', 'min_daq', 'optimisation_type', \
                 'address_extension', 'identification_field_type', 'granularity_odt_entry', 'max_odt_entry_size_daq', \
                 'overload_indication', 'prescaler_supported', 'resume_supported', 'daq_list', 'timestamp_supported', \
-                'event', 'EVENT', 'IDENT', 'NUMERIC'
+                'event', 'EVENT', 'IDENT', 'NUMERIC','stim'
 
     def __init__(self,
                  daq_config_type,
@@ -451,6 +452,7 @@ class Daq(A2lNode):
         self.resume_supported = None
         self.daq_list = list()
         self.timestamp_supported = list()
+        self.stim = list()
         self.event = list()
         self.EVENT = list()
         self.IDENT = list()
@@ -756,7 +758,7 @@ class IfDataMemorySegment(A2lNode):
 
 @a2l_node_type('if_data_module')
 class IfDataModule(A2lNode):
-    __slots__ = 'name', 'source', 'raster', 'event_group', 'seed_key', 'checksum', 'tp_blob', 'tp_data'
+    __slots__ = 'name', 'source', 'raster', 'event_group', 'seed_key', 'checksum', 'tp_blob', 'tp_data','if_data_module_unsupported_element'
 
     def __init__(self, name, args):
         self.name = name
@@ -767,6 +769,7 @@ class IfDataModule(A2lNode):
         self.checksum = None
         self.tp_blob = None
         self.tp_data = None
+        self.if_data_module_unsupported_element=None
         super(IfDataModule, self).__init__(*args)
 
 
@@ -820,7 +823,7 @@ class Measurement(A2lNode):
                 'upper_limit', 'display_identifier', 'read_write', 'format', 'array_size', 'bit_mask', \
                 'bit_operation', 'byte_order', 'max_refresh', 'virtual', 'function_list', 'ecu_address', 'error_mask', \
                 'ref_memory_segment', 'annotation', 'if_data_xcp', 'if_data_measurement', 'matrix_dim', \
-                'ecu_address_extension'
+                'ecu_address_extension','symbol_link'
 
     def __init__(self, name, long_identifier, data_type, conversion, resolution, accuracy, lower_limit,
                  upper_limit, args):
@@ -834,6 +837,7 @@ class Measurement(A2lNode):
         self.upper_limit = upper_limit
         self.display_identifier = None
         self.read_write = None
+        self.symbol_link = None
         self.format = None
         self.array_size = None
         self.bit_mask = None
@@ -920,7 +924,7 @@ class Module(A2lNode):
 @a2l_node_type('MOD_COMMON')
 class ModCommon(A2lNode):
     __slots__ = 'comment', 's_rec_layout', 'deposit', 'byte_order', 'data_size', 'alignment_byte', 'alignment_word', \
-                'alignment_long', 'alignment_float32_ieee', 'alignment_float64_ieee'
+                'alignment_long', 'alignment_float32_ieee', 'alignment_float64_ieee','alignment_int64'
 
     def __init__(self, comment, args):
         self.comment = comment
@@ -931,6 +935,7 @@ class ModCommon(A2lNode):
         self.alignment_byte = None
         self.alignment_word = None
         self.alignment_long = None
+        self.alignment_int64 = None
         self.alignment_float32_ieee = None
         self.alignment_float64_ieee = None
         super(ModCommon, self).__init__(*args)
@@ -1118,7 +1123,7 @@ class RecordLayout(A2lNode):
                 'src_addr_x', 'src_addr_y', 'src_addr_z', 'rip_addr_x', 'rip_addr_y', 'rip_addr_z', 'rip_addr_w', \
                 'shift_op_x', 'shift_op_y', 'shift_op_z', 'offset_x', 'offset_y', 'offset_z', 'dist_op_x', \
                 'dist_op_y', 'dist_op_z', 'alignment_byte', 'alignment_word', 'alignment_long', \
-                'alignment_float32_ieee', 'alignment_float64_ieee', 'reserved'
+                'alignment_float32_ieee', 'alignment_float64_ieee', 'reserved','alignment_int64'
 
     def __init__(self, name, args):
         self.name = name
@@ -1160,6 +1165,7 @@ class RecordLayout(A2lNode):
         self.alignment_long = None
         self.alignment_float32_ieee = None
         self.alignment_float64_ieee = None
+        self.alignment_int64 = None
         self.reserved = list()
         super(RecordLayout, self).__init__(*args)
 
@@ -1389,6 +1395,13 @@ class TimestampSupported(A2lNode):
         self.unit = unit
         self.timestamp_fixed = None
         super(TimestampSupported, self).__init__(*args)
+
+
+@a2l_node_type('STIM')
+class Stim(A2lNode):
+    def __init__(self,args):
+        super(Stim, self).__init__(*args)
+
 
 
 @a2l_node_type('UNIT')

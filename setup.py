@@ -8,7 +8,7 @@ setup(
         'pya2l.parser',
         'pya2l.parser.grammar'
     ],
-    url='https://github.com/Sauci/pya2l',
+    url='https://github.com/vaasu070/pya2l',
     license='BSD',
     author='Guillaume Sottas',
     author_email='guillaumesottas@gmail.com',

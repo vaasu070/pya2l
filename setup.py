@@ -10,8 +10,8 @@ setup(
     ],
     url='https://github.com/vaasu070/pya2l',
     license='BSD',
-    author='Guillaume Sottas',
-    author_email='guillaumesottas@gmail.com',
+    author='Srinivas',
+    author_email='vaasu070@gmail.com',
     description='utility for a2l files',
     entry_points={
         'console_scripts': [ 'pya2l=pya2l:main' ]
